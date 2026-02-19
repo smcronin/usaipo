@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invention — USAIPO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">⚡ USAIPO</div>
+        <div class="links">
+            <a href="/">Home</a>
+            <a href="/browse.html">Browse Inventions</a>
+            <a href="/file.html">File an Invention</a>
+            <a href="/governance.html">Governance</a>
+        </div>
+    </nav>
+    <div class="container" style="max-width: 900px;">
+        <div id="content">Loading...</div>
+    </div>
+    <script>
+    async function load() {
+        const params = new URLSearchParams(window.location.search);
+        let fn = params.get('id');
+        if (!fn) {
+            fn = window.location.pathname.split('/').pop();
+        }
+        if (!fn || fn === 'invention.html') {
+            document.getElementById('content').innerHTML = '<h2>No invention specified</h2><p><a href="/browse.html">Browse all inventions</a></p>';
+            return;
+        }
+        try {
+            const inv = await (await fetch(`/api/inventions/${fn}`)).json();
+            if (inv.detail) throw new Error(inv.detail);
+            document.title = `${inv.title} — USAIPO`;
+            
+            let councilHtml = '';
+            if (inv.metadata?.council_review) {
+                const cr = inv.metadata.council_review;
+                councilHtml = `
+                <div class="inv-section">
+                    <h2>Council Review</h2>
+                    <p><strong>Decision:</strong> <span class="badge badge-${cr.decision}">${cr.decision?.toUpperCase()}</span></p>
+                    <p><strong>Votes:</strong> ${cr.votes?.grant || 0} Grant / ${cr.votes?.reject || 0} Reject</p>
+                    <p><strong>Reviewed:</strong> ${cr.reviewed_at?.substring(0,10)}</p>
+                    ${(cr.reviews||[]).map(r => `
+                        <details style="margin-top:1rem;">
+                            <summary style="cursor:pointer;color:var(--accent);">${r.model}</summary>
+                            <pre style="background:var(--bg);padding:1rem;border-radius:8px;white-space:pre-wrap;font-size:0.85rem;margin-top:0.5rem;">${r.review}</pre>
+                        </details>
+                    `).join('')}
+                </div>`;
+            }
+
+            document.getElementById('content').innerHTML = `
+                <div class="inv-header">
+                    <a href="/browse.html" style="color:var(--text2); font-size:0.85rem;">← Back to Browse</a>
+                    <h1 style="margin-top:1rem;">${inv.title}</h1>
+                    <div class="meta" style="font-size:0.95rem;">
+                        <span class="badge badge-${inv.status}">${inv.status}</span>
+                        <span class="badge badge-${inv.license_type}" style="margin-left:0.3rem;">${inv.license_type}</span>
+                        <span style="margin-left:1rem;">${inv.filing_number}</span>
+                        <span style="margin-left:1rem;">Filed: ${inv.filed_date?.substring(0,10)}</span>
+                        <span style="margin-left:1rem;">Priority: ${inv.priority_date?.substring(0,10)}</span>
+                    </div>
+                    <div style="margin-top:0.5rem; color:var(--text2);">
+                        Inventors: ${(inv.inventors||[]).join(', ')}
+                        ${(inv.categories||[]).length ? ' • Categories: ' + inv.categories.join(', ') : ''}
+                    </div>
+                </div>
+                
+                <div class="inv-section">
+                    <h2>Abstract</h2>
+                    <p>${inv.abstract}</p>
+                </div>
+                
+                <div class="inv-section">
+                    <h2>Description</h2>
+                    <div style="white-space: pre-wrap;">${inv.description}</div>
+                </div>
+                
+                <div class="inv-section">
+                    <h2>Claims</h2>
+                    ${(inv.claims||[]).map((c,i) => `<div class="claim"><span class="claim-num">${i+1}.</span> ${c}</div>`).join('')}
+                </div>
+                
+                ${(inv.prior_art||[]).length ? `
+                <div class="inv-section">
+                    <h2>Prior Art</h2>
+                    <ul>${inv.prior_art.map(r => `<li>${r}</li>`).join('')}</ul>
+                </div>` : ''}
+                
+                ${councilHtml}
+                
+                <div class="inv-section" style="margin-top:3rem; padding-top:1rem; border-top:1px solid var(--border);">
+                    <p style="color:var(--text2); font-size:0.85rem;">
+                        Machine-readable: <a href="/api/inventions/${inv.filing_number}">JSON API</a>
+                    </p>
+                </div>
+            `;
+        } catch(e) {
+            document.getElementById('content').innerHTML = '<h2>Invention not found</h2><p><a href="/browse.html">Browse all inventions</a></p>';
+        }
+    }
+    load();
+    </script>
+</body>
+</html>

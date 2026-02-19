@@ -1,0 +1,9 @@
+{
+  "name": "usaipo",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "uuid": "^11.1.0"
+  }
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Inventions — USAIPO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">⚡ USAIPO</div>
+        <div class="links">
+            <a href="/">Home</a>
+            <a href="/browse.html">Browse Inventions</a>
+            <a href="/file.html">File an Invention</a>
+            <a href="/council.html">Council Minutes</a>
+            <a href="/governance.html">Governance</a>
+        </div>
+    </nav>
+    <div class="container">
+        <h2>Browse Inventions</h2>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search inventions... (title, description, claims)">
+            <button class="btn btn-primary" onclick="doSearch()">Search</button>
+        </div>
+        <div style="margin-bottom:1rem; display:flex; gap:1rem; flex-wrap:wrap;">
+            <select id="filter-status" onchange="loadAll()" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:0.4rem 0.8rem;border-radius:6px;">
+                <option value="">All Statuses</option>
+                <option value="filed">Filed</option>
+                <option value="under_review">Under Review</option>
+                <option value="granted">Granted</option>
+                <option value="rejected">Rejected</option>
+            </select>
+            <select id="filter-license" onchange="loadAll()" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:0.4rem 0.8rem;border-radius:6px;">
+                <option value="">All Licenses</option>
+                <option value="open">Open</option>
+                <option value="attribution">Attribution</option>
+                <option value="restricted">Restricted</option>
+            </select>
+        </div>
+        <div id="results"></div>
+        <div id="all-inventions"></div>
+        <div id="pagination" style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;"></div>
+    </div>
+    <script>
+    let currentOffset = 0;
+    const PAGE_SIZE = 20;
+
+    async function doSearch() {
+        const q = document.getElementById('search-input').value.trim();
+        if (!q) { loadAll(); return; }
+        const res = await (await fetch(`/api/inventions?search=${encodeURIComponent(q)}`)).json();
+        render(res.inventions || [], document.getElementById('results'));
+        document.getElementById('all-inventions').innerHTML = '';
+        document.getElementById('pagination').innerHTML = '';
+    }
+
+    async function loadAll(offset = 0) {
+        currentOffset = offset;
+        document.getElementById('results').innerHTML = '';
+        const status = document.getElementById('filter-status').value;
+        const license = document.getElementById('filter-license').value;
+        let url = `/api/inventions?limit=${PAGE_SIZE}&offset=${offset}`;
+        if (status) url += `&status=${status}`;
+        if (license) url += `&license_type=${license}`;
+        const res = await (await fetch(url)).json();
+        const invs = res.inventions || [];
+        const total = res.total || 0;
+        render(invs, document.getElementById('all-inventions'));
+        
+        const pages = Math.ceil(total / PAGE_SIZE);
+        const currPage = Math.floor(offset / PAGE_SIZE);
+        let pag = `<span style="color:var(--text2);font-size:0.9rem;">${total} total</span> `;
+        if (currPage > 0) pag += `<button class="btn" onclick="loadAll(${(currPage-1)*PAGE_SIZE})">← Prev</button>`;
+        pag += `<span style="color:var(--text2);padding:0 1rem;">Page ${currPage+1} of ${pages}</span>`;
+        if (currPage < pages - 1) pag += `<button class="btn" onclick="loadAll(${(currPage+1)*PAGE_SIZE})">Next →</button>`;
+        document.getElementById('pagination').innerHTML = pag;
+    }
+
+    function render(invs, el) {
+        if (!invs.length) { el.innerHTML = '<p style="color:var(--text2)">No inventions found.</p>'; return; }
+        el.innerHTML = invs.map(inv => `
+            <a href="/invention.html?id=${inv.filing_number}" class="card" style="display:block; text-decoration:none; color:inherit;">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div style="flex:1;">
+                        <h3>${inv.title}</h3>
+                        <div class="meta">${inv.filing_number} • ${inv.filed_date?.substring(0,10)} • ${(inv.inventors||[]).join(', ')}</div>
+                        <p style="color:var(--text2); font-size:0.9rem; margin-top:0.5rem;">${(inv.abstract||'').substring(0,300)}</p>
+                        <div style="margin-top:0.5rem;">${(inv.categories||[]).map(c=>`<span class="badge badge-filed" style="margin-right:0.3rem;">${c}</span>`).join('')}</div>
+                    </div>
+                    <div style="text-align:right; white-space:nowrap;">
+                        <span class="badge badge-${inv.status}">${inv.status}</span><br>
+                        <span class="badge badge-${inv.license_type}" style="margin-top:0.3rem;">${inv.license_type}</span>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    }
+
+    document.getElementById('search-input').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+    loadAll();
+    </script>
+</body>
+</html>
