@@ -41,6 +41,8 @@ nav .links a:hover { color: var(--text); text-decoration: none; }
 /* Badges */
 .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
 .badge-filed { background: rgba(59,130,246,0.2); color: var(--accent); }
+.badge-unexamined { background: rgba(100,100,100,0.2); color: #aaa; }
+.badge-examination_requested { background: rgba(142,68,173,0.2); color: #c39bd3; }
 .badge-granted { background: rgba(16,185,129,0.2); color: var(--green); }
 .badge-open { background: rgba(16,185,129,0.15); color: var(--green); }
 .badge-attribution { background: rgba(139,92,246,0.2); color: var(--accent2); }

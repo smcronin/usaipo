@@ -70,7 +70,7 @@ module.exports = async function handler(req, res) {
       const now = new Date().toISOString();
 
       await sql`INSERT INTO inventions (id, filing_number, title, abstract, description, claims, categories, prior_art, inventors, attachments, status, priority_date, filed_date, granted_date, license_type, citation_count, metadata)
-        VALUES (${id}, ${filing_number}, ${title}, ${abstract}, ${description}, ${JSON.stringify(claims)}, ${JSON.stringify(categories)}, ${JSON.stringify(prior_art)}, ${JSON.stringify(inventors)}, '[]', 'filed', ${now}, ${now}, ${null}, ${license_type}, 0, ${JSON.stringify(metadata)})`;
+        VALUES (${id}, ${filing_number}, ${title}, ${abstract}, ${description}, ${JSON.stringify(claims)}, ${JSON.stringify(categories)}, ${JSON.stringify(prior_art)}, ${JSON.stringify(inventors)}, '[]', 'unexamined', ${now}, ${now}, ${null}, ${license_type}, 0, ${JSON.stringify(metadata)})`;
 
       const [inv] = await sql`SELECT * FROM inventions WHERE filing_number = ${filing_number}`;
       return res.status(201).json(formatInvention(inv));
