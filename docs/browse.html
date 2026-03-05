@@ -44,13 +44,14 @@
         <div id="pagination" style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;"></div>
     </div>
     <script>
+    const API = 'https://usaipo.vercel.app';
     let currentOffset = 0;
     const PAGE_SIZE = 20;
 
     async function doSearch() {
         const q = document.getElementById('search-input').value.trim();
         if (!q) { loadAll(); return; }
-        const res = await (await fetch(`/api/inventions?search=${encodeURIComponent(q)}`)).json();
+        const res = await (await fetch(`${API}/api/inventions?search=${encodeURIComponent(q)}`)).json();
         render(res.inventions || [], document.getElementById('results'));
         document.getElementById('all-inventions').innerHTML = '';
         document.getElementById('pagination').innerHTML = '';
@@ -61,7 +62,7 @@
         document.getElementById('results').innerHTML = '';
         const status = document.getElementById('filter-status').value;
         const license = document.getElementById('filter-license').value;
-        let url = `/api/inventions?limit=${PAGE_SIZE}&offset=${offset}`;
+        let url = `${API}/api/inventions?limit=${PAGE_SIZE}&offset=${offset}`;
         if (status) url += `&status=${status}`;
         if (license) url += `&license_type=${license}`;
         const res = await (await fetch(url)).json();
