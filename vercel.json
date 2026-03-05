@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/inventions/:filing_number", "destination": "/api/inventions/[filing_number]" }
+    { "source": "/api/inventions/:filing_number", "destination": "/api/inventions/[filing_number]" },
+    { "source": "/api/examine/:filing_number", "destination": "/api/examine/[filing_number]" },
+    { "source": "/api/council/review/:filing_number", "destination": "/api/council/review/[filing_number]" }
   ],
   "headers": [
     {
