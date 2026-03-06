@@ -6,7 +6,7 @@ module.exports.config = { maxDuration: 300 };
 const COUNCIL_MODELS = [
   'anthropic/claude-opus-4.6',
   'openai/gpt-5.4',
-  'google/gemini-3.1-pro-preview',
+  'google/gemini-3-flash-preview',
   'x-ai/grok-4.1-fast',
 ];
 
