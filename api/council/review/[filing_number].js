@@ -1,5 +1,8 @@
 const { getDb, formatInvention } = require('../../lib/db');
 
+// Tell Vercel this function can run up to 300s (Pro plan)
+module.exports.config = { maxDuration: 300 };
+
 const COUNCIL_MODELS = [
   'anthropic/claude-opus-4.6',
   'openai/gpt-5.4',
@@ -128,20 +131,26 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Set under_review immediately so the response is fast
+    // Set under_review immediately
     await sql`UPDATE inventions SET status = 'under_review' WHERE filing_number = ${filing_number}`;
 
-    // Run review async — Vercel will keep the function alive until it resolves
-    // (up to 300s on pro, 60s on hobby)
-    res.status(202).json({
-      message: 'Council review initiated. 4 AI council members are evaluating this invention.',
-      filing_number,
-      status: 'under_review',
-      note: 'Check back in 30-60 seconds for the decision.',
-    });
-
-    // Run after response is sent
+    // Run synchronously — Vercel keeps the function alive until this resolves.
+    // Takes 30-60s but returns the actual decision rather than a 202 promise.
     await runCouncilReview(filing_number, formatted);
+
+    // Fetch updated record to return final decision
+    const [updated] = await sql`SELECT * FROM inventions WHERE filing_number = ${filing_number}`;
+    const updatedFmt = formatInvention(updated);
+    const cr = updatedFmt.metadata?.council_review;
+
+    return res.status(200).json({
+      message: 'Council review complete.',
+      filing_number,
+      status: updatedFmt.status,
+      decision: cr?.decision || null,
+      votes: cr?.votes || null,
+      reviews: (cr?.reviews || []).map(r => ({ model: r.model, decision: r.decision, review: r.review })),
+    });
   } catch (e) {
     console.error('Council review error:', e);
     if (!res.headersSent) {
