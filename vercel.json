@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "api/council/review/[filing_number].js": { "maxDuration": 300 },
+    "api/webhook/payment.js": { "maxDuration": 60 }
+  },
   "rewrites": [
     { "source": "/api/inventions/:filing_number", "destination": "/api/inventions/[filing_number]" },
     { "source": "/api/examine/:filing_number", "destination": "/api/examine/[filing_number]" },
