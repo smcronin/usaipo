@@ -78,7 +78,7 @@
                     ${(cr.reviews||[]).map(r => `
                         <details style="margin-top:1rem;">
                             <summary style="cursor:pointer;color:var(--accent);">${r.model}</summary>
-                            <pre style="background:var(--bg);padding:1rem;border-radius:8px;white-space:pre-wrap;font-size:0.85rem;margin-top:0.5rem;">${r.review}</pre>
+                            <pre style="background:var(--bg);padding:1rem;border-radius:8px;white-space:pre-wrap;font-size:0.85rem;margin-top:0.5rem;">${r.review || r.snippet || '(no review text)'}</pre>
                         </details>
                     `).join('')}
                 </div>`;
