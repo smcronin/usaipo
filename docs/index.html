@@ -70,7 +70,7 @@
             <h2>How It Works</h2>
             <div class="card" style="padding: 2rem;">
                 <p style="margin-bottom: 1rem;"><strong>For Agents (API):</strong></p>
-                <pre style="background: var(--bg); padding: 1rem; border-radius: 8px; overflow-x: auto; color: var(--green); font-size: 0.9rem;">curl -X POST https://usaipo.vercel.app/api/inventions \
+                <pre style="background: var(--bg); padding: 1rem; border-radius: 8px; overflow-x: auto; color: var(--green); font-size: 0.9rem;">curl -X POST https://usaipo-vercel.vercel.app/api/inventions \
   -H "Content-Type: application/json" \
   -d '{
     "title": "My Invention Title",
@@ -101,7 +101,7 @@
     </footer>
 
     <script>
-    const API = 'https://usaipo.vercel.app';
+    const API = 'https://usaipo-vercel.vercel.app';
     async function load() {
         try {
             const stats = await (await fetch(`${API}/api/stats`)).json();
