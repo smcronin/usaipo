@@ -22,7 +22,7 @@ async function callModel(model, prompt) {
     body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 500,
+      max_tokens: 1000,
       temperature: 0.3,
     }),
   });
