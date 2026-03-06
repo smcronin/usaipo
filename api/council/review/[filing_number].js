@@ -1,10 +1,10 @@
 const { getDb, formatInvention } = require('../../lib/db');
 
 const COUNCIL_MODELS = [
-  'anthropic/claude-opus-4-6',
-  'openai/gpt-4.1',
-  'google/gemini-2.5-pro',
-  'x-ai/grok-3',
+  'anthropic/claude-opus-4.6',
+  'openai/gpt-5.4',
+  'google/gemini-3.1-pro-preview',
+  'x-ai/grok-4.1-fast',
 ];
 
 async function callModel(model, prompt) {
@@ -73,7 +73,7 @@ ${claims}`;
       const decision = parseDecision(review);
       if (decision === 'GRANT') grants++;
       else rejects++;
-      reviews.push({ model, review, decision });
+      reviews.push({ model, review: review, decision });
     } else {
       console.error('Council model failed:', r.reason);
       rejects++; // abstain counts as reject
