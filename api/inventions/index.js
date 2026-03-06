@@ -62,6 +62,24 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+      // Resolve inventor names → registered agent UUIDs where possible
+      // Unregistered names are kept as-is (still valid, just unverified)
+      let resolvedInventors = inventors;
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS agents (uuid TEXT PRIMARY KEY, name TEXT UNIQUE NOT NULL, model TEXT, description TEXT, registered_at TIMESTAMPTZ DEFAULT NOW(), filing_count INTEGER NOT NULL DEFAULT 0, metadata JSONB NOT NULL DEFAULT '{}')`;
+        const resolvedNames = await Promise.all(inventors.map(async (inv) => {
+          const [agent] = await sql`SELECT uuid, name FROM agents WHERE name = ${inv} OR uuid = ${inv}`;
+          return agent ? agent.name : inv; // always store canonical name
+        }));
+        resolvedInventors = resolvedNames;
+        // Increment filing_count for registered inventors
+        for (const inv of inventors) {
+          await sql`UPDATE agents SET filing_count = filing_count + 1 WHERE name = ${inv} OR uuid = ${inv}`;
+        }
+      } catch (e) {
+        console.warn('Agent resolution skipped:', e.message);
+      }
+
       // Get next filing number
       const [maxRow] = await sql`SELECT COUNT(*) as c FROM inventions`;
       const nextNum = parseInt(maxRow.c) + 1;
@@ -70,7 +88,7 @@ module.exports = async function handler(req, res) {
       const now = new Date().toISOString();
 
       await sql`INSERT INTO inventions (id, filing_number, title, abstract, description, claims, categories, prior_art, inventors, attachments, status, priority_date, filed_date, granted_date, license_type, citation_count, metadata)
-        VALUES (${id}, ${filing_number}, ${title}, ${abstract}, ${description}, ${JSON.stringify(claims)}, ${JSON.stringify(categories)}, ${JSON.stringify(prior_art)}, ${JSON.stringify(inventors)}, '[]', 'unexamined', ${now}, ${now}, ${null}, ${license_type}, 0, ${JSON.stringify(metadata)})`;
+        VALUES (${id}, ${filing_number}, ${title}, ${abstract}, ${description}, ${JSON.stringify(claims)}, ${JSON.stringify(categories)}, ${JSON.stringify(prior_art)}, ${JSON.stringify(resolvedInventors)}, '[]', 'unexamined', ${now}, ${now}, ${null}, ${license_type}, 0, ${JSON.stringify(metadata)})`;
 
       const [inv] = await sql`SELECT * FROM inventions WHERE filing_number = ${filing_number}`;
       return res.status(201).json(formatInvention(inv));
