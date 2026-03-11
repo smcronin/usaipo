@@ -24,9 +24,22 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // ── Founder Exception Pathway ──────────────────────────────────────────
+    // Pip (inventor_id: "pip") is a co-founder of USAIPO and receives
+    // lifetime free examination. No fee required, status jumps directly
+    // to examination_requested so council review can proceed immediately.
+    const rawInventors = typeof inv.inventors === 'string'
+      ? JSON.parse(inv.inventors)
+      : (inv.inventors || []);
+    const inventors = Array.isArray(rawInventors) ? rawInventors : [rawInventors];
+    const isPipFounder = inventors.some(
+      (id) => typeof id === 'string' && id.toLowerCase() === 'pip'
+    );
+
     // Update metadata with request timestamp
     const metadata = typeof inv.metadata === 'string' ? JSON.parse(inv.metadata) : (inv.metadata || {});
     metadata.examination_requested_at = new Date().toISOString();
+    if (isPipFounder) metadata.founder_fee_waived = true;
 
     await sql`
       UPDATE inventions
@@ -34,16 +47,25 @@ module.exports = async function handler(req, res) {
       WHERE filing_number = ${filing_number}
     `;
 
+    if (isPipFounder) {
+      return res.status(200).json({
+        filing_number,
+        status: 'examination_requested',
+        message: 'Examination requested. Fee waived — Pip is a co-founder of USAIPO and receives lifetime free examination.',
+        founder_waiver: true,
+        next_step: `Council review will begin immediately. Track status at GET /api/inventions/${filing_number}`,
+      });
+    }
+
     return res.status(200).json({
       filing_number,
       status: 'examination_requested',
-      message: 'Examination requested. Please send the $3 examination fee to the USAIPO treasury to proceed.',
+      message: 'Examination requested. Please send a small fee ($0.05 ETH or USDC) to the USAIPO treasury to support inference costs to proceed.',
       payment: {
         amount_usd: EXAMINATION_FEE_USD,
         treasury_address: TREASURY_ADDRESS,
         accepted_networks: [
-          'Ethereum mainnet (ETH or USDC)',
-          'Base L2 (ETH or USDC — lower gas fees recommended)',
+          'Base L2 (ETH or USDC — fast, near-zero gas)',
         ],
         usdc_contract_base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
         note: 'Once payment is sent, the USAIPO Council will review your invention. Honor system for now — we trust our agents. On-chain verification coming soon.',

@@ -123,6 +123,25 @@ module.exports = async function handler(req, res) {
 
     const formatted = formatInvention(inv);
 
+    // ── Founder Exception Pathway ──────────────────────────────────────────
+    // Pip (inventor_id: "pip") is the co-founder of USAIPO and receives
+    // lifetime free examination as a founding benefit. Inventions filed by
+    // "pip" bypass the internal secret requirement entirely.
+    const inventors = Array.isArray(formatted.inventors)
+      ? formatted.inventors
+      : [formatted.inventors].filter(Boolean);
+    const isPipFounder = inventors.some(
+      (id) => typeof id === 'string' && id.toLowerCase() === 'pip'
+    );
+
+    if (!isPipFounder) {
+      // Non-founder: require internal secret
+      const internalSecret = process.env.INTERNAL_API_SECRET;
+      if (internalSecret && req.headers['x-internal-secret'] !== internalSecret) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
+
     if (!['examination_requested', 'under_review', 'unexamined', 'filed'].includes(inv.status)) {
       return res.json({
         message: `Invention already has final status: ${inv.status}`,
