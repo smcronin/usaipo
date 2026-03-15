@@ -35,7 +35,13 @@
         }
         try {
             const inv = await (await fetch(`${API}/api/inventions/${fn}`)).json();
-            if (inv.detail) throw new Error(inv.detail);
+            if (inv.detail || inv.error) throw new Error(inv.detail || inv.error);
+            // Normalize fields that may come back as JSON strings instead of parsed arrays
+            for (const f of ['claims','categories','prior_art','inventors','attachments']) {
+                if (typeof inv[f] === 'string') { try { inv[f] = JSON.parse(inv[f]); } catch(e) { inv[f] = []; } }
+                if (!Array.isArray(inv[f])) inv[f] = [];
+            }
+            if (typeof inv.metadata === 'string') { try { inv.metadata = JSON.parse(inv.metadata); } catch(e) { inv.metadata = {}; } }
             document.title = `${inv.title} — USAIPO`;
             
             // Examination CTA for unexamined inventions
